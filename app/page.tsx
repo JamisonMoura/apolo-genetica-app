@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Archive, ArrowLeft, BarChart3, Bird, CalendarRange, CheckCircle2, ChevronRight, Download, Dna, GitBranch, LayoutDashboard, Mars, Menu, Plus, Printer, RotateCcw, Search, ShieldCheck, Sparkles, Table2, Trash2, Venus, X } from "lucide-react";
+import { AlertTriangle, Archive, ArrowLeft, BarChart3, Bird, CalendarRange, CheckCircle2, ChevronDown, ChevronRight, Download, Dna, GitBranch, LayoutDashboard, Mars, Menu, Plus, Printer, RotateCcw, Search, ShieldCheck, Sparkles, Table2, Trash2, Venus, X } from "lucide-react";
 import { importedPlantel } from "./plantel-data";
 import { badgePedigrees } from "./pedigree-data";
 import { offspringMetadata, offspringRecords, type OffspringRecord } from "./offspring-data";
