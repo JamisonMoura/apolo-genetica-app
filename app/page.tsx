@@ -36,7 +36,7 @@ const token=()=>localStorage.getItem("apolo-access-token")||"";
 const apiHeaders=()=>({"content-type":"application/json","authorization":`Bearer ${token()}`});
 const persistBird=(bird:BirdRow)=>fetch("/api/birds",{method:"PUT",headers:apiHeaders(),body:JSON.stringify(bird)}).catch(()=>null);
 const forgetBird=(name:string)=>fetch(`/api/birds?name=${encodeURIComponent(name)}`,{method:"DELETE",headers:apiHeaders()}).catch(()=>null);
-const nav=[{label:"Visão geral",icon:LayoutDashboard},{label:"Minhas aves",icon:Bird},{label:"Calculadora genética",icon:Dna},{label:"Matriz genética",icon:Table2},{label:"Planejador",icon:CalendarRange},{label:"Simulador de árvore",icon:GitBranch},{label:"Pedigrees",icon:GitBranch},{label:"Auditoria genética",icon:ShieldCheck}];
+const nav=[{label:"Visão geral",icon:LayoutDashboard},{label:"Minhas aves",icon:Bird},{label:"Calculadora genética",icon:Dna},{label:"Matriz genética",icon:Table2},{label:"Planejador",icon:CalendarRange},{label:"Simulador de árvore",icon:GitBranch},{label:"Pedigrees",icon:GitBranch},{label:"Auditoria genética",icon:ShieldCheck},{label:"Genética populacional",icon:BarChart3}];
 
 type PedigreeQuality={known:number;total:number;percent:number};
 const pedigreeQualityCache=new WeakMap<BirdRow[],Map<string,PedigreeQuality>>();
@@ -70,7 +70,7 @@ export default function Home(){
     {view==="Matriz genética"&&<Matrix birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
     {view==="Planejador"&&<Planner birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
     {view==="Simulador de árvore"&&<TreeSimulator birds={birds} male={male} female={female} setMale={setMale} setFemale={setFemale} openDiagnosis={()=>go("Calculadora genética")}/>}
-    {view==="Pedigrees"&&<Pedigrees birds={birds} setBirds={setBirds} target={pedigreeTarget}/>}\n    {view==="Auditoria genética"&&<AuditPanel birds={birds}/>}
+    {view==="Pedigrees"&&<Pedigrees birds={birds} setBirds={setBirds} target={pedigreeTarget}/>}\n    {view==="Auditoria genética"&&<AuditPanel birds={birds}/>}\n    {view==="Genética populacional"&&<PopulationGenetics birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
    </section>
   </main>
   {drawer&&<div className="drawer-backdrop" onClick={()=>setDrawer(false)}><div className="drawer" onClick={e=>e.stopPropagation()}><button onClick={()=>setDrawer(false)}><X/></button><Brand/><Nav active={view} go={go}/></div></div>}
@@ -256,4 +256,16 @@ function BirdDetail({birds,name,go,setMale,setFemale,setPedigreeTarget}:{birds:B
  {mates.map((x,i)=><button className="pair-line" key={x.bird.id} onClick={()=>diagnose(x.bird)}><span><b>#{i+1} {x.bird.name}</b><small> • pedigree {x.result.confidence}% • escore {x.score}</small></span><em>F {x.result.F.toFixed(2)}%</em><ChevronRight size={17}/></button>)}</section>
  <section className="panel"><div className="card-heading"><div><p>PRODUÇÃO HISTÓRICA</p><h2>Descendência registrada</h2></div><BarChart3/></div>
  <div className="stats"><Stat n={prod.total} label="Total"/><Stat n={prod.males} label="Machos"/><Stat n={prod.females} label="Fêmeas"/><Stat n={prod.years.length} label="Anos com produção"/></div></section></>
+}
+
+
+function PopulationGenetics({birds,choose}:{birds:BirdRow[];choose:(m:string,f:string)=>void}){
+ const active=birds.filter(isActive),males=active.filter(b=>b.sex==="Macho"),females=active.filter(b=>b.sex==="Fêmea"),bases=plantelConcentration(active).slice(0,10);
+ const pairs=males.flatMap(m=>females.map(f=>({m,f,r:genetic(m.name,f.name,birds,false)}))).filter(x=>!x.r.relationshipType);
+ const avgF=pairs.length?pairs.reduce((a,x)=>a+x.r.F,0)/pairs.length:0,low=pairs.filter(x=>x.r.F<=6.25).length,high=pairs.filter(x=>x.r.F>12.5).length;
+ const rows=males.map(m=>({bird:m,avg:females.length?females.reduce((a,f)=>a+genetic(m.name,f.name,birds,false).F,0)/females.length:0,best:[...females].map(f=>({f,r:genetic(m.name,f.name,birds,false)})).sort((a,b)=>a.r.F-b.r.F)[0]})).sort((a,b)=>a.avg-b.avg);
+ return <><Title tag="GENÉTICA POPULACIONAL" title="Diversidade do plantel" text="Visão global da concentração de sangue, parentesco e oportunidades de abertura genética."/>
+ <section className="stats-grid"><article className="stat-card"><span>F médio entre casais possíveis</span><strong>{avgF.toFixed(2)}%</strong><small>{pairs.length} combinações avaliadas</small></article><article className="stat-card"><span>Casais até 6,25%</span><strong>{low}</strong><small>faixa de maior abertura</small></article><article className="stat-card"><span>Casais acima de 12,5%</span><strong>{high}</strong><small>exigem atenção</small></article><article className="stat-card"><span>Bases genéticas</span><strong>{bases.length}</strong><small>principais contribuições</small></article></section>
+ <section className="dashboard-grid"><article className="panel"><div className="card-heading"><div><p>CONCENTRAÇÃO</p><h2>Principais sangues do plantel</h2></div><Dna/></div>{bases.map(x=><div className="pair-line" key={x.name}><span><b>{x.name}</b></span><em>{x.value.toFixed(1)}%</em></div>)}</article>
+ <article className="panel"><div className="card-heading"><div><p>ABERTURA GENÉTICA</p><h2>Machos com menor parentesco médio</h2></div><GitBranch/></div>{rows.slice(0,8).map(x=><button className="pair-line" key={x.bird.id} onClick={()=>x.best&&choose(x.bird.name,x.best.f.name)}><span><b>{x.bird.name}</b><small> melhor opção: {x.best?.f.name||"—"}</small></span><em>F médio {x.avg.toFixed(2)}%</em></button>)}</article></section></>
 }
