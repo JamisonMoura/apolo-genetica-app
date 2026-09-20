@@ -65,12 +65,16 @@ export default function Home(){
   <main className="workspace"><header><button className="mobile-menu" onClick={()=>setDrawer(true)}><Menu/></button><img className="mobile-brand" src="/logo-criadouro-apolo.png" alt="Criadouro Apolo"/><div><span>Planejamento genético</span><strong>{view}</strong></div><button className="add-bird" onClick={()=>setModal(true)}><Plus size={18}/> Cadastrar ave</button></header>
    <section className="content">
     {view==="Visão geral"&&<Overview birds={birds} go={go} setMale={setMale} setFemale={setFemale}/>}
-    {view==="Minhas aves"&&<BirdsView birds={birds} setBirds={setBirds} openProfile={name=>{setProfileTarget(name);go("Ficha individual")}}/>}\n    {view==="Ficha individual"&&<BirdDetail birds={birds} name={profileTarget} go={go} setMale={setMale} setFemale={setFemale} setPedigreeTarget={setPedigreeTarget}/>}
+    {view==="Minhas aves"&&<BirdsView birds={birds} setBirds={setBirds} openProfile={name=>{setProfileTarget(name);go("Ficha individual")}}/>}
+    {view==="Ficha individual"&&<BirdDetail birds={birds} name={profileTarget} go={go} setMale={setMale} setFemale={setFemale} setPedigreeTarget={setPedigreeTarget}/>}
     {view==="Calculadora genética"&&<Simulator birds={birds} male={male} female={female} setMale={setMale} setFemale={setFemale} go={go}/>}
     {view==="Matriz genética"&&<Matrix birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
     {view==="Planejador"&&<Planner birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
     {view==="Simulador de árvore"&&<TreeSimulator birds={birds} male={male} female={female} setMale={setMale} setFemale={setFemale} openDiagnosis={()=>go("Calculadora genética")}/>}
-    {view==="Pedigrees"&&<Pedigrees birds={birds} setBirds={setBirds} target={pedigreeTarget}/>}\n    {view==="Auditoria genética"&&<AuditPanel birds={birds}/>}\n    {view==="Genética populacional"&&<PopulationGenetics birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}\n    {view==="Conservação genética"&&<ConservationPanel birds={birds}/>}
+    {view==="Pedigrees"&&<Pedigrees birds={birds} setBirds={setBirds} target={pedigreeTarget}/>}
+    {view==="Auditoria genética"&&<AuditPanel birds={birds}/>}
+    {view==="Genética populacional"&&<PopulationGenetics birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
+    {view==="Conservação genética"&&<ConservationPanel birds={birds}/>}
    </section>
   </main>
   {drawer&&<div className="drawer-backdrop" onClick={()=>setDrawer(false)}><div className="drawer" onClick={e=>e.stopPropagation()}><button onClick={()=>setDrawer(false)}><X/></button><Brand/><Nav active={view} go={go}/></div></div>}
@@ -252,7 +256,8 @@ function BirdDetail({birds,name,go,setMale,setFemale,setPedigreeTarget}:{birds:B
 }
 
 
-function PopulationGenetics({birds,choose}:{birds:BirdRow[];choose:(m:string,f:string)=>void}){\n const [popTab,setPopTab]=useState<"overview"|"composition"|"lineages"|"kinship"|"strategy">("overview");
+function PopulationGenetics({birds,choose}:{birds:BirdRow[];choose:(m:string,f:string)=>void}){
+ const [popTab,setPopTab]=useState<"overview"|"composition"|"lineages"|"kinship"|"strategy">("overview");
  const active=birds.filter(isActive),males=active.filter(b=>b.sex==="Macho"),females=active.filter(b=>b.sex==="Fêmea"),bases=plantelConcentration(active).slice(0,7);
  const pairs=males.flatMap(m=>females.map(f=>({m,f,r:genetic(m.name,f.name,birds,false)}))).filter(x=>!x.r.relationshipType),avg=pairs.length?pairs.reduce((a,x)=>a+x.r.F,0)/pairs.length:0;
  const bands=[pairs.filter(x=>x.r.F<3).length,pairs.filter(x=>x.r.F>=3&&x.r.F<6.25).length,pairs.filter(x=>x.r.F>=6.25&&x.r.F<12.5).length,pairs.filter(x=>x.r.F>=12.5&&x.r.F<=20).length,pairs.filter(x=>x.r.F>20).length],max=Math.max(...bands,1);
