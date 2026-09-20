@@ -36,7 +36,7 @@ const token=()=>localStorage.getItem("apolo-access-token")||"";
 const apiHeaders=()=>({"content-type":"application/json","authorization":`Bearer ${token()}`});
 const persistBird=(bird:BirdRow)=>fetch("/api/birds",{method:"PUT",headers:apiHeaders(),body:JSON.stringify(bird)}).catch(()=>null);
 const forgetBird=(name:string)=>fetch(`/api/birds?name=${encodeURIComponent(name)}`,{method:"DELETE",headers:apiHeaders()}).catch(()=>null);
-const nav=[{label:"Visão geral",icon:LayoutDashboard},{label:"Minhas aves",icon:Bird},{label:"Calculadora genética",icon:Dna},{label:"Matriz genética",icon:Table2},{label:"Planejador",icon:CalendarRange},{label:"Simulador de árvore",icon:GitBranch},{label:"Pedigrees",icon:GitBranch},{label:"Auditoria genética",icon:ShieldCheck},{label:"Genética populacional",icon:BarChart3}];
+const nav=[{label:"Visão geral",icon:LayoutDashboard},{label:"Minhas aves",icon:Bird},{label:"Calculadora genética",icon:Dna},{label:"Matriz genética",icon:Table2},{label:"Planejador",icon:CalendarRange},{label:"Simulador de árvore",icon:GitBranch},{label:"Pedigrees",icon:GitBranch},{label:"Auditoria genética",icon:ShieldCheck},{label:"Genética populacional",icon:BarChart3},{label:"Conservação genética",icon:Dna}];
 
 type PedigreeQuality={known:number;total:number;percent:number};
 const pedigreeQualityCache=new WeakMap<BirdRow[],Map<string,PedigreeQuality>>();
@@ -70,7 +70,7 @@ export default function Home(){
     {view==="Matriz genética"&&<Matrix birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
     {view==="Planejador"&&<Planner birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
     {view==="Simulador de árvore"&&<TreeSimulator birds={birds} male={male} female={female} setMale={setMale} setFemale={setFemale} openDiagnosis={()=>go("Calculadora genética")}/>}
-    {view==="Pedigrees"&&<Pedigrees birds={birds} setBirds={setBirds} target={pedigreeTarget}/>}\n    {view==="Auditoria genética"&&<AuditPanel birds={birds}/>}\n    {view==="Genética populacional"&&<PopulationGenetics birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
+    {view==="Pedigrees"&&<Pedigrees birds={birds} setBirds={setBirds} target={pedigreeTarget}/>}\n    {view==="Auditoria genética"&&<AuditPanel birds={birds}/>}\n    {view==="Genética populacional"&&<PopulationGenetics birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}\n    {view==="Conservação genética"&&<ConservationPanel birds={birds}/>}
    </section>
   </main>
   {drawer&&<div className="drawer-backdrop" onClick={()=>setDrawer(false)}><div className="drawer" onClick={e=>e.stopPropagation()}><button onClick={()=>setDrawer(false)}><X/></button><Brand/><Nav active={view} go={go}/></div></div>}
@@ -269,4 +269,19 @@ function PopulationGenetics({birds,choose}:{birds:BirdRow[];choose:(m:string,f:s
  <section className="stats-grid"><article className="stat-card"><span>F médio entre casais possíveis</span><strong>{avgF.toFixed(2)}%</strong><small>{pairs.length} combinações avaliadas</small></article><article className="stat-card"><span>Casais até 6,25%</span><strong>{low}</strong><small>faixa de maior abertura</small></article><article className="stat-card"><span>Casais acima de 12,5%</span><strong>{high}</strong><small>exigem atenção</small></article><article className="stat-card"><span>Bases genéticas</span><strong>{bases.length}</strong><small>principais contribuições</small></article></section>
  <section className="dashboard-grid"><article className="panel"><div className="card-heading"><div><p>CONCENTRAÇÃO</p><h2>Principais sangues do plantel</h2></div><Dna/></div>{bases.map(x=><div className="pair-line" key={x.name}><span><b>{x.name}</b></span><em>{x.value.toFixed(1)}%</em></div>)}</article>
  <article className="panel"><div className="card-heading"><div><p>ABERTURA GENÉTICA</p><h2>Machos com menor parentesco médio</h2></div><GitBranch/></div>{rows.slice(0,8).map(x=><button className="pair-line" key={x.bird.id} onClick={()=>x.best&&choose(x.bird.name,x.best.f.name)}><span><b>{x.bird.name}</b><small> melhor opção: {x.best?.f.name||"—"}</small></span><em>F médio {x.avg.toFixed(2)}%</em></button>)}</article></section></>
+}
+
+
+function ConservationPanel({birds}:{birds:BirdRow[]}){
+ const active=birds.filter(isActive),males=active.filter(b=>b.sex==="Macho"),females=active.filter(b=>b.sex==="Fêmea");
+ const allPairs=males.flatMap(m=>females.map(f=>genetic(m.name,f.name,birds,false))).filter(r=>!r.relationshipType);
+ const baseAvg=allPairs.length?allPairs.reduce((a,r)=>a+r.F,0)/allPairs.length:0;
+ const impact=males.map(m=>{const leftM=males.filter(x=>x.id!==m.id),pairs=leftM.flatMap(mm=>females.map(ff=>genetic(mm.name,ff.name,birds,false))).filter(r=>!r.relationshipType),avg=pairs.length?pairs.reduce((a,r)=>a+r.F,0)/pairs.length:0;return{bird:m,avg,delta:avg-baseAvg}}).sort((a,b)=>b.delta-a.delta);
+ const matrixM=males.slice(0,12),matrixF=females.slice(0,12);
+ const bottlenecks=plantelConcentration(active).filter(x=>x.value>=20).slice(0,8);
+ return <><Title tag="CONSERVAÇÃO GENÉTICA" title="Risco, gargalos e diversidade" text="Simulação do efeito de reprodutores sobre a diversidade disponível no plantel."/>
+ <section className="stats-grid"><article className="stat-card"><span>F médio atual</span><strong>{baseAvg.toFixed(2)}%</strong><small>combinações macho × fêmea</small></article><article className="stat-card"><span>Gargalos ≥20%</span><strong>{bottlenecks.length}</strong><small>bases muito representadas</small></article><article className="stat-card"><span>Machos avaliados</span><strong>{males.length}</strong><small>impacto de retirada</small></article><article className="stat-card"><span>Fêmeas avaliadas</span><strong>{females.length}</strong><small>matriz reprodutiva</small></article></section>
+ <section className="panel"><div className="card-heading"><div><p>MATRIZ GLOBAL</p><h2>Consanguinidade prevista (%)</h2></div><Table2/></div><div style={{overflowX:"auto"}}><table style={{borderCollapse:"collapse",width:"100%",fontSize:12}}><thead><tr><th style={{padding:8,textAlign:"left"}}>Macho</th>{matrixF.map(f=><th key={f.id} style={{padding:8}}>{f.name}</th>)}</tr></thead><tbody>{matrixM.map(m=><tr key={m.id}><th style={{padding:8,textAlign:"left"}}>{m.name}</th>{matrixF.map(f=>{const r=genetic(m.name,f.name,birds,false);return <td key={f.id} style={{padding:8,textAlign:"center",fontWeight:700}}>{r.F.toFixed(1)}</td>})}</tr>)}</tbody></table></div></section>
+ <section className="dashboard-grid"><article className="panel"><div className="card-heading"><div><p>GARGALOS</p><h2>Sangues mais concentrados</h2></div><AlertTriangle/></div>{bottlenecks.length?bottlenecks.map(x=><div className="pair-line" key={x.name}><b>{x.name}</b><em>{x.value.toFixed(1)}%</em></div>):<p>Nenhuma base acima de 20% no conjunto atual.</p>}</article>
+ <article className="panel"><div className="card-heading"><div><p>SIMULAÇÃO DE RETIRADA</p><h2>Impacto por reprodutor</h2></div><Dna/></div>{impact.slice(0,10).map(x=><div className="pair-line" key={x.bird.id}><span><b>{x.bird.name}</b><small> F médio sem este macho: {x.avg.toFixed(2)}%</small></span><em>{x.delta>0?"+":""}{x.delta.toFixed(2)} pp</em></div>)}</article></section></>
 }
