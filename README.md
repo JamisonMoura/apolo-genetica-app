@@ -1,12 +1,28 @@
-# Apolo Genética App
+# Apolo Genética
 
-Base oficial do aplicativo de planejamento genético do Criadouro Apolo.
+Versão preparada para GitHub e Vercel a partir do código-fonte original fornecido.
 
-## Atualização 19/09/2026
-- Galador → melhores Matrizes
-- Matriz → melhores Galadores
-- Mesma matriz de cruzamentos/IPGA nos dois sentidos.
-- Base original: 79 aves, 27 machos, 52 fêmeas e 1.404 combinações.
-- Aves vendidas/inativas devem sair das opções sem apagar o histórico genealógico.
+## Executar localmente
 
-A recomendação de A × B é idêntica independentemente de a consulta começar pelo macho ou pela fêmea.
+Requer Node.js 22 ou superior.
+
+```bash
+npm ci
+npm run dev
+```
+
+Abra `http://localhost:3000`.
+
+## Publicar na Vercel
+
+1. Envie todo o conteúdo desta pasta para o repositório GitHub.
+2. Na Vercel, importe o repositório.
+3. Framework Preset: **Next.js**.
+4. Build Command: `npm run build`.
+5. Não é necessário configurar variáveis de ambiente para a versão local.
+
+## Dados
+
+Os dados originais do plantel e genealogia permanecem em `app/plantel-data.ts`,
+`app/pedigree-data.ts` e `app/offspring-data.ts`. Alterações feitas pela interface
+são mantidas no `localStorage` do navegador nesta versão Vercel.
