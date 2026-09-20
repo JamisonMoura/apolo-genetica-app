@@ -271,3 +271,28 @@
  .tree-print-guide{display:flex!important;flex-direction:column!important;gap:1.5mm!important;margin-top:-8mm!important;border:1pt solid #ccd6e0!important;background:#f7f9fc!important;padding:3mm!important;border-radius:2mm!important;font-size:7pt!important}
  .tree-print-guide b{font-size:8pt!important;color:#173b6c!important}.tree-print-guide strong{color:#173b6c!important}
 }
+
+/* Client pedigree print v2 */
+@media print{
+ .tree-simulator-card{width:287mm!important;min-height:190mm!important;padding:5mm 7mm!important;box-sizing:border-box!important}
+ .tree-print-header{grid-template-columns:1fr auto!important;margin-bottom:3mm!important}
+ .tree-simulator-head{display:flex!important;align-items:end!important;justify-content:space-between!important;margin-bottom:2mm!important}
+ .tree-scroll{width:100%!important;overflow:visible!important}
+ .tree-panorama{width:100%!important;min-width:100%!important;transform:none!important;margin:0 auto!important}
+ .sim-tree{width:100%!important;min-width:0!important;display:grid!important;grid-template-columns:25mm 1fr!important;align-items:center!important;column-gap:6mm!important}
+ .sim-tree>.sim-tree-node{justify-self:center!important}
+ .sim-tree>.sim-children.parents{width:100%!important;display:grid!important;grid-template-rows:1fr 1fr!important;gap:4mm!important}
+ .sim-branch{min-width:0!important}
+ .sim-children{gap:2.5mm!important}
+ .sim-tree-node{min-width:21mm!important;max-width:26mm!important;min-height:8mm!important;padding:1.4mm 1.5mm!important;font-size:6.2pt!important;line-height:1.1!important;border-radius:1.5mm!important}
+ .sim-tree-node strong{white-space:normal!important;overflow-wrap:anywhere!important}
+ .sim-tree-node span{font-size:5.2pt!important}
+ .tree-generation-labels{display:grid!important;grid-template-columns:25mm repeat(4,1fr)!important;gap:6mm!important;margin:0 0 2mm!important;padding:0!important;text-align:center!important}
+ .tree-generation-labels span{font-size:6.3pt!important;font-weight:800!important;letter-spacing:.08em!important;color:#718096!important}
+ .sim-branch,.sim-children{position:relative!important}
+ .sim-branch>.sim-children:before{content:""!important;position:absolute!important;left:-3mm!important;top:25%!important;bottom:25%!important;border-left:.6pt solid #536579!important}
+ .sim-branch>.sim-children>.sim-branch:before{content:""!important;position:absolute!important;left:-3mm!important;top:50%!important;width:3mm!important;border-top:.6pt solid #536579!important}
+ .sim-tree>.sim-children.parents:before{content:""!important;position:absolute!important;left:-6mm!important;top:25%!important;bottom:25%!important;border-left:.8pt solid #34495e!important}
+ .sim-tree>.sim-children.parents>.sim-branch:before{content:""!important;position:absolute!important;left:-6mm!important;top:50%!important;width:6mm!important;border-top:.8pt solid #34495e!important}
+ .tree-print-guide{margin:5mm auto 0!important;width:94%!important;padding:3mm 4mm!important}
+}
