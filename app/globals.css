@@ -223,3 +223,22 @@
  .matrix-print-title span{font-size:6.2pt!important}
  .print-legend{font-size:5.6pt!important;gap:3mm!important;margin-top:1.5mm!important}
 }
+
+/* Print v6: each female block is atomic; browser may never split it */
+@media print{
+ .matrix-print-title{break-after:avoid-page!important;page-break-after:avoid!important}
+ .print-matrix-blocks{display:block!important}
+ .print-matrix-block{
+   display:table!important;
+   width:100%!important;
+   margin:0 0 3mm!important;
+   break-inside:avoid-page!important;
+   page-break-inside:avoid!important;
+ }
+ .print-matrix-block:nth-child(2n){break-after:auto!important;page-break-after:auto!important}
+ .print-matrix-block:nth-child(2n+1):not(:first-child){break-before:page!important;page-break-before:always!important}
+ .print-matrix-block table{break-inside:avoid-page!important;page-break-inside:avoid!important}
+ .print-matrix-block thead,.print-matrix-block tbody,.print-matrix-block tr{break-inside:avoid!important;page-break-inside:avoid!important}
+ .print-block-head{break-after:avoid!important;page-break-after:avoid!important}
+ .print-legend{break-before:avoid!important;page-break-before:avoid!important}
+}
