@@ -242,3 +242,16 @@
  .print-block-head{break-after:avoid!important;page-break-after:avoid!important}
  .print-legend{break-before:avoid!important;page-break-before:avoid!important}
 }
+
+.print-guide{display:none}
+@media print{
+ .print-guide,.print-guide *{visibility:visible!important}
+ .print-guide{display:block!important;break-inside:avoid!important;page-break-inside:avoid!important;margin-top:4mm!important;border:1pt solid #b8c4d1!important;border-radius:2mm!important;padding:3mm!important;background:#f8fafc!important}
+ .print-guide-title{display:flex!important;justify-content:space-between!important;gap:5mm!important;border-bottom:.5pt solid #ccd5df!important;padding-bottom:2mm!important;margin-bottom:2mm!important}
+ .print-guide-title b{font-size:8pt!important;color:#173b6c!important}.print-guide-title span{font-size:6.5pt!important;color:#566579!important}
+ .print-legend{display:grid!important;grid-template-columns:repeat(5,1fr)!important;gap:2mm!important;margin:0!important}
+ .print-legend span{display:grid!important;grid-template-columns:5mm 1fr!important;grid-template-rows:auto auto!important;column-gap:1.5mm!important;align-items:center!important;font-size:6pt!important}
+ .print-legend i{grid-row:1/3!important;width:5mm!important;height:5mm!important}.print-legend b{font-size:6.5pt!important}.print-legend small{font-size:5.7pt!important;color:#59697c!important}
+ .print-guide p{font-size:6.2pt!important;line-height:1.3!important;margin:2.5mm 0 0!important;color:#34455a!important}
+ .print-matrix-block table{font-size:7pt!important}
+}
