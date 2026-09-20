@@ -296,3 +296,20 @@
  .sim-tree>.sim-children.parents>.sim-branch:before{content:""!important;position:absolute!important;left:-6mm!important;top:50%!important;width:6mm!important;border-top:.8pt solid #34495e!important}
  .tree-print-guide{margin:5mm auto 0!important;width:94%!important;padding:3mm 4mm!important}
 }
+
+/* Pedigree print v3: restore continuous parent-child connectors */
+@media print{
+ .sim-tree{position:relative!important;grid-template-columns:27mm 1fr!important;column-gap:8mm!important}
+ .sim-tree>.sim-tree-node{position:relative!important}
+ .sim-tree>.sim-tree-node:after{content:""!important;position:absolute!important;left:100%!important;top:50%!important;width:8mm!important;border-top:.9pt solid #34495e!important}
+ .sim-tree>.sim-children.parents{position:relative!important}
+ .sim-tree>.sim-children.parents:before{left:-4mm!important;top:25%!important;bottom:25%!important;border-left:.9pt solid #34495e!important}
+ .sim-tree>.sim-children.parents>.sim-branch:before{left:-4mm!important;width:4mm!important;border-top:.9pt solid #34495e!important}
+ .sim-branch{position:relative!important;display:grid!important;grid-template-columns:26mm 1fr!important;align-items:center!important;column-gap:5mm!important}
+ .sim-branch>.sim-tree-node{position:relative!important}
+ .sim-branch>.sim-tree-node:after{content:""!important;position:absolute!important;left:100%!important;top:50%!important;width:5mm!important;border-top:.65pt solid #536579!important}
+ .sim-branch>.sim-children{position:relative!important;display:grid!important;grid-template-rows:1fr 1fr!important;gap:2mm!important}
+ .sim-branch>.sim-children:before{left:-2.5mm!important;top:25%!important;bottom:25%!important;border-left:.65pt solid #536579!important}
+ .sim-branch>.sim-children>.sim-branch:before{left:-2.5mm!important;width:2.5mm!important;border-top:.65pt solid #536579!important}
+ .sim-tree-node{z-index:2!important}
+}
