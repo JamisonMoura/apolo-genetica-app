@@ -171,3 +171,15 @@
  .heatmap td{font-size:5.2pt!important;font-weight:700!important;text-align:center!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
  .f-vlow,.f-low,.f-mid,.f-high,.f-vhigh{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 }
+
+/* print hotfix: keep the active matrix mounted and visible */
+@media print{
+ body *{visibility:hidden!important}
+ .matrix-pro,.matrix-pro *{visibility:visible!important}
+ .matrix-pro{display:block!important;position:absolute!important;left:0!important;top:0!important;width:287mm!important;height:auto!important;overflow:visible!important}
+ .matrix-main,.heatmap-scroll,.heatmap{display:block!important;visibility:visible!important}
+ .heatmap{display:table!important}
+ .heatmap thead{display:table-header-group!important}.heatmap tbody{display:table-row-group!important}.heatmap tr{display:table-row!important}.heatmap th,.heatmap td{display:table-cell!important}
+ .matrix-print-title{visibility:visible!important}
+ .matrix-print-title *{visibility:visible!important}
+}
