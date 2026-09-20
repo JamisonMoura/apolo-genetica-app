@@ -227,21 +227,13 @@ function BirdModal({close,save}:{close:()=>void;save:(b:Omit<BirdRow,"id"|"statu
 
 
 function AuditPanel({birds}:{birds:BirdRow[]}){
- const a=auditPedigree(birds), active=birds.filter(isActive);
- const incomplete=active.filter(b=>pedigreeQuality(b,birds).percent<100).sort((x,y)=>pedigreeQuality(x,birds).percent-pedigreeQuality(y,birds).percent).slice(0,12);
+ const a=auditPedigree(birds),active=birds.filter(isActive),incomplete=active.filter(b=>pedigreeQuality(b,birds).percent<100).sort((x,y)=>pedigreeQuality(x,birds).percent-pedigreeQuality(y,birds).percent),complete=active.filter(b=>pedigreeQuality(b,birds).percent===100).length,partial=active.filter(b=>{const p=pedigreeQuality(b,birds).percent;return p>=50&&p<100}).length,weak=active.length-complete-partial;
  return <><Title tag="QUALIDADE DO BANCO" title="Auditoria genética do plantel" text="Controle de integridade dos pedigrees usados nas decisões de acasalamento."/>
- <section className="stats-grid">
-  <article className="stat-card"><span>Qualidade geral</span><strong>{a.score}%</strong><small>integridade genealógica</small></article>
-  <article className="stat-card"><span>Pedigrees completos</span><strong>{a.complete}/{a.total}</strong><small>aves reprodutivas</small></article>
-  <article className="stat-card"><span>Pais ausentes</span><strong>{a.missingParents}</strong><small>cadastros a revisar</small></article>
-  <article className="stat-card"><span>Conflitos</span><strong>{a.conflicts+a.duplicates+a.brokenLinks}</strong><small>inconsistências detectadas</small></article>
- </section>
- <section className="table-card"><div className="card-heading"><div><p>PRIORIDADE DE REVISÃO</p><h2>Pedigrees incompletos</h2></div><ShieldCheck/></div>
- <div className="birds-table"><div className="table-head"><span>Ave</span><span>Sexo</span><span>Pai</span><span>Mãe</span><span>Completude</span></div>
- {incomplete.map(b=><div className="table-row" key={b.id}><strong>{b.name}</strong><span>{b.sex}</span><span>{b.father||"—"}</span><span>{b.mother||"—"}</span><b>{pedigreeQuality(b,birds).percent}%</b></div>)}</div></section></>
+ <section className="audit-kpis"><div><ShieldCheck/><span>Qualidade geral<strong>{a.score}%</strong><small>Integridade genealógica</small></span></div><div><CheckCircle2/><span>Pedigrees completos<strong>{a.complete}/{a.total}</strong><small>Aves reprodutivas</small></span></div><div><AlertTriangle/><span>Pais ausentes<strong>{a.missingParents}</strong><small>Cadastros a revisar</small></span></div><div><X/><span>Conflitos<strong>{a.conflicts+a.duplicates+a.brokenLinks}</strong><small>Inconsistências detectadas</small></span></div></section>
+ <section className="audit-grid"><article className="panel"><div className="card-heading"><div><p>STATUS DOS PEDIGREES</p><h2>Completude do banco</h2></div><BarChart3/></div><div className="audit-status"><span><i className="ok"/>Completos <b>{complete}</b></span><span><i className="partial"/>Parciais <b>{partial}</b></span><span><i className="weak"/>Incompletos <b>{weak}</b></span></div></article>
+ <article className="panel audit-list"><div className="card-heading"><div><p>PRIORIDADE DE REVISÃO</p><h2>Aves com pedigree incompleto</h2></div><ShieldCheck/></div><div className="birds-table"><div className="table-head"><span>Ave</span><span>Sexo</span><span>Pai</span><span>Mãe</span><span>Completude</span></div>{incomplete.slice(0,15).map(x=><div className="table-row" key={x.id}><strong>{x.name}</strong><span>{x.sex}</span><span>{x.father||"—"}</span><span>{x.mother||"—"}</span><b>{pedigreeQuality(x,birds).percent}%</b></div>)}</div></article>
+ <article className="panel audit-donut"><div className="card-heading"><div><p>DISTRIBUIÇÃO</p><h2>Qualidade genealógica</h2></div><Dna/></div><div className="donut" style={{background:`conic-gradient(#31bd78 0 ${complete/Math.max(1,active.length)*100}%,#9cdb7a 0 ${(complete+partial)/Math.max(1,active.length)*100}%,#ffbd42 0 100%)`}}><i><b>{active.length}</b><small>aves</small></i></div><div className="donut-legend"><span><i className="ok"/>Completos <b>{(complete/Math.max(1,active.length)*100).toFixed(1)}%</b></span><span><i className="partial"/>Parciais <b>{(partial/Math.max(1,active.length)*100).toFixed(1)}%</b></span><span><i className="weak"/>Incompletos <b>{(weak/Math.max(1,active.length)*100).toFixed(1)}%</b></span></div></article></section></>
 }
-
-
 function BirdDetail({birds,name,go,setMale,setFemale,setPedigreeTarget}:{birds:BirdRow[];name:string;go:(s:string)=>void;setMale:(s:string)=>void;setFemale:(s:string)=>void;setPedigreeTarget:(s:string)=>void}){
  const b=findBird(name,birds)||birds.find(isBreedable);if(!b)return null;
  const prod=productionSummary(b.name),quality=pedigreeQuality(b,birds),merit=birdMerit(b);
@@ -261,17 +253,18 @@ function BirdDetail({birds,name,go,setMale,setFemale,setPedigreeTarget}:{birds:B
 
 
 function PopulationGenetics({birds,choose}:{birds:BirdRow[];choose:(m:string,f:string)=>void}){
- const active=birds.filter(isActive),males=active.filter(b=>b.sex==="Macho"),females=active.filter(b=>b.sex==="Fêmea"),bases=plantelConcentration(active).slice(0,10);
- const pairs=males.flatMap(m=>females.map(f=>({m,f,r:genetic(m.name,f.name,birds,false)}))).filter(x=>!x.r.relationshipType);
- const avgF=pairs.length?pairs.reduce((a,x)=>a+x.r.F,0)/pairs.length:0,low=pairs.filter(x=>x.r.F<=6.25).length,high=pairs.filter(x=>x.r.F>12.5).length;
- const rows=males.map(m=>({bird:m,avg:females.length?females.reduce((a,f)=>a+genetic(m.name,f.name,birds,false).F,0)/females.length:0,best:[...females].map(f=>({f,r:genetic(m.name,f.name,birds,false)})).sort((a,b)=>a.r.F-b.r.F)[0]})).sort((a,b)=>a.avg-b.avg);
- return <><Title tag="GENÉTICA POPULACIONAL" title="Diversidade do plantel" text="Visão global da concentração de sangue, parentesco e oportunidades de abertura genética."/>
- <section className="stats-grid"><article className="stat-card"><span>F médio entre casais possíveis</span><strong>{avgF.toFixed(2)}%</strong><small>{pairs.length} combinações avaliadas</small></article><article className="stat-card"><span>Casais até 6,25%</span><strong>{low}</strong><small>faixa de maior abertura</small></article><article className="stat-card"><span>Casais acima de 12,5%</span><strong>{high}</strong><small>exigem atenção</small></article><article className="stat-card"><span>Bases genéticas</span><strong>{bases.length}</strong><small>principais contribuições</small></article></section>
- <section className="dashboard-grid"><article className="panel"><div className="card-heading"><div><p>CONCENTRAÇÃO</p><h2>Principais sangues do plantel</h2></div><Dna/></div>{bases.map(x=><div className="pair-line" key={x.name}><span><b>{x.name}</b></span><em>{x.value.toFixed(1)}%</em></div>)}</article>
- <article className="panel"><div className="card-heading"><div><p>ABERTURA GENÉTICA</p><h2>Machos com menor parentesco médio</h2></div><GitBranch/></div>{rows.slice(0,8).map(x=><button className="pair-line" key={x.bird.id} onClick={()=>x.best&&choose(x.bird.name,x.best.f.name)}><span><b>{x.bird.name}</b><small> melhor opção: {x.best?.f.name||"—"}</small></span><em>F médio {x.avg.toFixed(2)}%</em></button>)}</article></section></>
+ const active=birds.filter(isActive),males=active.filter(b=>b.sex==="Macho"),females=active.filter(b=>b.sex==="Fêmea"),bases=plantelConcentration(active).slice(0,7);
+ const pairs=males.flatMap(m=>females.map(f=>({m,f,r:genetic(m.name,f.name,birds,false)}))).filter(x=>!x.r.relationshipType),avg=pairs.length?pairs.reduce((a,x)=>a+x.r.F,0)/pairs.length:0;
+ const bands=[pairs.filter(x=>x.r.F<3).length,pairs.filter(x=>x.r.F>=3&&x.r.F<6.25).length,pairs.filter(x=>x.r.F>=6.25&&x.r.F<12.5).length,pairs.filter(x=>x.r.F>=12.5&&x.r.F<=20).length,pairs.filter(x=>x.r.F>20).length],max=Math.max(...bands,1);
+ const rank=(rows:BirdRow[],opposite:BirdRow[])=>rows.map(x=>({b:x,avg:opposite.length?opposite.reduce((a,y)=>a+genetic(x.sex==="Macho"?x.name:y.name,x.sex==="Macho"?y.name:x.name,birds,false).F,0)/opposite.length:0})).sort((a,b)=>a.avg-b.avg);
+ const mr=rank(males,females),fr=rank(females,males);
+ return <><Title tag="GENÉTICA POPULACIONAL" title="Genética populacional" text="Visão global da concentração de sangue, parentesco e oportunidades de abertura genética no plantel."/>
+ <section className="population-kpis"><div><Dna/><span>F médio entre casais<strong>{avg.toFixed(2)}%</strong><small>{pairs.length} combinações</small></span></div><div><CheckCircle2/><span>Casais até 6,25%<strong>{bands[0]+bands[1]}</strong><small>Boa oportunidade</small></span></div><div><AlertTriangle/><span>Casais 6,25–12,5%<strong>{bands[2]}</strong><small>Atenção moderada</small></span></div><div><AlertTriangle/><span>Casais &gt; 12,5%<strong>{bands[3]+bands[4]}</strong><small>Exige mais atenção</small></span></div><div><GitBranch/><span>Bases genéticas<strong>{bases.length}</strong><small>Principais contribuições</small></span></div></section>
+ <section className="population-grid"><article className="panel population-chart"><div className="card-heading"><div><p>DISTRIBUIÇÃO</p><h2>Consanguinidade (F)</h2></div><BarChart3/></div><div className="bar-chart">{bands.map((n,i)=><div key={i}><b>{n}</b><i><u style={{height:`${Math.max(8,n/max*100)}%`}}/></i><span>{["< 3%","3–6,25%","6,25–12,5%","12,5–20%","> 20%"][i]}</span></div>)}</div></article>
+ <article className="panel"><div className="card-heading"><div><p>CONTRIBUIÇÃO</p><h2>Principais fontes de sangue</h2></div><Dna/></div>{bases.map(x=><div className="blood-bar" key={x.name}><b>{x.name}</b><i><u style={{width:`${Math.min(100,x.value*3)}%`}}/></i><strong>{x.value.toFixed(1)}%</strong></div>)}</article></section>
+ <section className="population-ranks"><article className="panel"><div className="card-heading"><div><p>ABERTURA GENÉTICA</p><h2>Machos com menor parentesco médio</h2></div><Mars/></div>{mr.slice(0,7).map((x,i)=><button className="rank-button" key={x.b.id} onClick={()=>{const f=[...females].sort((a,b)=>genetic(x.b.name,a.name,birds,false).F-genetic(x.b.name,b.name,birds,false).F)[0];if(f)choose(x.b.name,f.name)}}><b>#{i+1} {x.b.name}</b><strong>{x.avg.toFixed(2)}%</strong></button>)}</article>
+ <article className="panel"><div className="card-heading"><div><p>ABERTURA GENÉTICA</p><h2>Fêmeas com menor parentesco médio</h2></div><Venus/></div>{fr.slice(0,7).map((x,i)=><div className="rank-button" key={x.b.id}><b>#{i+1} {x.b.name}</b><strong>{x.avg.toFixed(2)}%</strong></div>)}</article></section></>
 }
-
-
 function ConservationPanel({birds}:{birds:BirdRow[]}){
  const active=birds.filter(isActive),males=active.filter(b=>b.sex==="Macho"),females=active.filter(b=>b.sex==="Fêmea");
  const [maleFilter,setMaleFilter]=useState("Todos"),[femaleFilter,setFemaleFilter]=useState("Todas"),[simMale,setSimMale]=useState("");
