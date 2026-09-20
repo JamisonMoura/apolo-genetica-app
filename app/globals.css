@@ -183,3 +183,22 @@
  .matrix-print-title{visibility:visible!important}
  .matrix-print-title *{visibility:visible!important}
 }
+
+.print-matrix-blocks{display:none}
+@media print{
+ .heatmap-screen{display:none!important}
+ .print-matrix-blocks,.print-matrix-blocks *{visibility:visible!important}
+ .print-matrix-blocks{display:block!important}
+ .print-matrix-block{display:block!important;break-inside:avoid!important;page-break-inside:avoid!important;margin:0 0 5mm!important}
+ .print-matrix-block:nth-child(2n){break-after:page!important;page-break-after:always!important}
+ .print-block-head{display:flex!important;justify-content:space-between!important;align-items:end!important;border-bottom:1pt solid #173b6c!important;padding:0 0 1.5mm!important;margin-bottom:1.5mm!important;font-size:7pt!important}
+ .print-block-head b{font-size:9pt!important}.print-block-head span{color:#5f6d7e!important}
+ .print-matrix-block table{display:table!important;border-collapse:collapse!important;width:100%!important;table-layout:fixed!important;font-size:7.2pt!important}
+ .print-matrix-block thead{display:table-header-group!important}.print-matrix-block tbody{display:table-row-group!important}.print-matrix-block tr{display:table-row!important}
+ .print-matrix-block th,.print-matrix-block td{display:table-cell!important;border:.35pt solid #8e99a6!important;padding:1.4mm .7mm!important;text-align:center!important;line-height:1.05!important}
+ .print-matrix-block thead th{background:#edf2f7!important;font-size:6.5pt!important;white-space:normal!important;height:auto!important;writing-mode:horizontal-tb!important;transform:none!important}
+ .print-matrix-block th:first-child{width:27mm!important;text-align:left!important;padding-left:1.5mm!important;font-weight:800!important}
+ .print-matrix-block td{font-weight:800!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+ .print-legend{display:flex!important;gap:5mm!important;justify-content:center!important;font-size:6pt!important;margin-top:2mm!important;break-inside:avoid!important}
+ .print-legend span{display:flex!important;align-items:center!important;gap:1mm!important}.print-legend i{width:4mm!important;height:4mm!important;border-radius:1mm!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+}
