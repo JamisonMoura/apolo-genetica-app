@@ -38,7 +38,8 @@ const persistBird=(bird:BirdRow)=>fetch("/api/birds",{method:"PUT",headers:apiHe
 const forgetBird=(name:string)=>fetch(`/api/birds?name=${encodeURIComponent(name)}`,{method:"DELETE",headers:apiHeaders()}).catch(()=>null);
 const nav=[{label:"Visão geral",icon:LayoutDashboard},{label:"Minhas aves",icon:Bird},{label:"Calculadora genética",icon:Dna},{label:"Matriz genética",icon:Table2},{label:"Planejador",icon:CalendarRange},{label:"Simulador de árvore",icon:GitBranch},{label:"Pedigrees",icon:GitBranch},{label:"Auditoria genética",icon:ShieldCheck},{label:"Genética populacional",icon:BarChart3},{label:"Conservação genética",icon:Dna}];
 
-type PedigreeQuality={known:number;total:number;percent:number};\nconst isFounder=(b?:BirdRow)=>!!b&&!b.father&&!b.mother;
+type PedigreeQuality={known:number;total:number;percent:number};
+const isFounder=(b?:BirdRow)=>!!b&&!b.father&&!b.mother;
 const pedigreeQualityCache=new WeakMap<BirdRow[],Map<string,PedigreeQuality>>();
 function pedigreeQuality(b:BirdRow,birds:BirdRow[]){let cache=pedigreeQualityCache.get(birds);if(!cache){cache=new Map();pedigreeQualityCache.set(birds,cache)}const key=nameKey(b.name),cached=cache.get(key);if(cached)return cached;if(isFounder(b)){const result={known:1,total:1,percent:100};cache.set(key,result);return result}const fields=[b.father,b.mother,...derivedAncestors(b,birds)],known=fields.filter(Boolean).length,result={known,total:fields.length,percent:Math.round(known/fields.length*100)};cache.set(key,result);return result}
 function auditPedigree(birds:BirdRow[]){
