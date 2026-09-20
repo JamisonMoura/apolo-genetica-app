@@ -36,7 +36,7 @@ const token=()=>localStorage.getItem("apolo-access-token")||"";
 const apiHeaders=()=>({"content-type":"application/json","authorization":`Bearer ${token()}`});
 const persistBird=(bird:BirdRow)=>fetch("/api/birds",{method:"PUT",headers:apiHeaders(),body:JSON.stringify(bird)}).catch(()=>null);
 const forgetBird=(name:string)=>fetch(`/api/birds?name=${encodeURIComponent(name)}`,{method:"DELETE",headers:apiHeaders()}).catch(()=>null);
-const nav=[{label:"Visão geral",icon:LayoutDashboard},{label:"Minhas aves",icon:Bird},{label:"Calculadora genética",icon:Dna},{label:"Matriz genética",icon:Table2},{label:"Planejador",icon:CalendarRange},{label:"Simulador de árvore",icon:GitBranch},{label:"Pedigrees",icon:GitBranch}];
+const nav=[{label:"Visão geral",icon:LayoutDashboard},{label:"Minhas aves",icon:Bird},{label:"Calculadora genética",icon:Dna},{label:"Matriz genética",icon:Table2},{label:"Planejador",icon:CalendarRange},{label:"Simulador de árvore",icon:GitBranch},{label:"Pedigrees",icon:GitBranch},{label:"Auditoria genética",icon:ShieldCheck}];
 
 type PedigreeQuality={known:number;total:number;percent:number};
 const pedigreeQualityCache=new WeakMap<BirdRow[],Map<string,PedigreeQuality>>();
@@ -70,7 +70,7 @@ export default function Home(){
     {view==="Matriz genética"&&<Matrix birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
     {view==="Planejador"&&<Planner birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
     {view==="Simulador de árvore"&&<TreeSimulator birds={birds} male={male} female={female} setMale={setMale} setFemale={setFemale} openDiagnosis={()=>go("Calculadora genética")}/>}
-    {view==="Pedigrees"&&<Pedigrees birds={birds} setBirds={setBirds} target={pedigreeTarget}/>}
+    {view==="Pedigrees"&&<Pedigrees birds={birds} setBirds={setBirds} target={pedigreeTarget}/>}\n    {view==="Auditoria genética"&&<AuditPanel birds={birds}/>}
    </section>
   </main>
   {drawer&&<div className="drawer-backdrop" onClick={()=>setDrawer(false)}><div className="drawer" onClick={e=>e.stopPropagation()}><button onClick={()=>setDrawer(false)}><X/></button><Brand/><Nav active={view} go={go}/></div></div>}
@@ -222,3 +222,19 @@ function TreeNode({name,meta,sex,subject=false,onOpen}:{name:string;meta:string;
 function GenealogyModal({bird,labels,close,save}:{bird:BirdRow;labels:string[];close:()=>void;save:(changes:Partial<BirdRow>)=>void}){const [father,setFather]=useState(bird.father),[mother,setMother]=useState(bird.mother),[a,setA]=useState<string[]>(bird.ancestors??Array(12).fill("")),[traits,setTraits]=useState({song:bird.song,production:bird.production,fertility:bird.fertility,offspring:bird.offspring,family:bird.family});const score=(key:keyof typeof traits,label:string)=><label>{label}<input type="number" min="0" max="10" step="0.5" value={traits[key]??""} onChange={e=>setTraits({...traits,[key]:e.target.value===""?undefined:Number(e.target.value)})} placeholder="0 a 10"/></label>;return <div className="modal-bg" onClick={close}><form className="modal-card genealogy-modal" onClick={e=>e.stopPropagation()} onSubmit={e=>{e.preventDefault();save({father,mother,ancestors:a,...traits})}}><div className="modal-title"><div><p>FICHA DE {bird.name.toUpperCase()}</p><h2>Genealogia e avaliação</h2></div><button type="button" onClick={close}><X/></button></div><h3>Pais</h3><div className="form-grid"><label>Pai<input value={father} onChange={e=>setFather(e.target.value)}/></label><label>Mãe<input value={mother} onChange={e=>setMother(e.target.value)}/></label></div><h3>Avaliação zootécnica</h3><p className="form-help">Preencha somente o que você realmente avaliou. Escala de 0 a 10.</p><div className="trait-grid">{score("song","Canto")}{score("production","Produção")}{score("fertility","Fertilidade")}{score("offspring","Qualidade dos filhos")}{score("family","Valor de família")}</div><h3>Avós e bisavós</h3><div className="ancestor-grid">{labels.map((label,i)=><label key={label}>{label}<input value={a[i]??""} onChange={e=>{const n=[...a];n[i]=e.target.value;setA(n)}} placeholder="Nome da ave"/></label>)}</div><div className="modal-actions"><button type="button" onClick={close}>Cancelar</button><button type="submit">Salvar ficha</button></div></form></div>}
 
 function BirdModal({close,save}:{close:()=>void;save:(b:Omit<BirdRow,"id"|"status">)=>void}){const [b,setB]=useState<Omit<BirdRow,"id"|"status">>({name:"",sex:"Macho",ring:"",father:"",mother:"",lineage:""});return <div className="modal-bg" onClick={close}><form className="modal-card" onClick={e=>e.stopPropagation()} onSubmit={e=>{e.preventDefault();if(b.name&&b.ring)save(b)}}><div className="modal-title"><div><p>NOVO REGISTRO</p><h2>Cadastrar ave</h2></div><button type="button" onClick={close}><X/></button></div><div className="form-grid"><label>Nome<input required value={b.name} onChange={e=>setB({...b,name:e.target.value})}/></label><label>Sexo<select value={b.sex} onChange={e=>setB({...b,sex:e.target.value as Sex})}><option>Macho</option><option>Fêmea</option></select></label><label>Anilha<input required value={b.ring} onChange={e=>setB({...b,ring:e.target.value})}/></label><label>Linhagem<input value={b.lineage} onChange={e=>setB({...b,lineage:e.target.value})}/></label><label>Pai<input value={b.father} onChange={e=>setB({...b,father:e.target.value})}/></label><label>Mãe<input value={b.mother} onChange={e=>setB({...b,mother:e.target.value})}/></label></div><div className="modal-actions"><button type="button" onClick={close}>Cancelar</button><button type="submit">Salvar ave</button></div></form></div>}
+
+
+function AuditPanel({birds}:{birds:BirdRow[]}){
+ const a=auditPedigree(birds), active=birds.filter(isActive);
+ const incomplete=active.filter(b=>pedigreeQuality(b,birds).percent<100).sort((x,y)=>pedigreeQuality(x,birds).percent-pedigreeQuality(y,birds).percent).slice(0,12);
+ return <><Title tag="QUALIDADE DO BANCO" title="Auditoria genética do plantel" text="Controle de integridade dos pedigrees usados nas decisões de acasalamento."/>
+ <section className="stats-grid">
+  <article className="stat-card"><span>Qualidade geral</span><strong>{a.score}%</strong><small>integridade genealógica</small></article>
+  <article className="stat-card"><span>Pedigrees completos</span><strong>{a.complete}/{a.total}</strong><small>aves reprodutivas</small></article>
+  <article className="stat-card"><span>Pais ausentes</span><strong>{a.missingParents}</strong><small>cadastros a revisar</small></article>
+  <article className="stat-card"><span>Conflitos</span><strong>{a.conflicts+a.duplicates+a.brokenLinks}</strong><small>inconsistências detectadas</small></article>
+ </section>
+ <section className="table-card"><div className="card-heading"><div><p>PRIORIDADE DE REVISÃO</p><h2>Pedigrees incompletos</h2></div><ShieldCheck/></div>
+ <div className="birds-table"><div className="table-head"><span>Ave</span><span>Sexo</span><span>Pai</span><span>Mãe</span><span>Completude</span></div>
+ {incomplete.map(b=><div className="table-row" key={b.id}><strong>{b.name}</strong><span>{b.sex}</span><span>{b.father||"—"}</span><span>{b.mother||"—"}</span><b>{pedigreeQuality(b,birds).percent}%</b></div>)}</div></section></>
+}
