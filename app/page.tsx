@@ -54,7 +54,7 @@ export default function Home(){
  const doLogin=async(e:React.FormEvent)=>{e.preventDefault();setLoginBusy(true);setLoginError("");try{const r=await fetch(SUPABASE_URL+"/auth/v1/token?grant_type=password",{method:"POST",headers:{apikey:SUPABASE_KEY,"content-type":"application/json"},body:JSON.stringify({email:loginEmail,password:loginPassword})});const d=await r.json();if(!r.ok)throw new Error("E-mail ou senha inválidos.");localStorage.setItem("apolo-access-token",d.access_token);setAuth("in")}catch(err){setLoginError(err instanceof Error?err.message:"Falha no login.")}finally{setLoginBusy(false)}};
  const logout=()=>{localStorage.removeItem("apolo-access-token");setAuth("out")};
  const [view,setView]=useState("Visão geral"),[drawer,setDrawer]=useState(false),[modal,setModal]=useState(false);
- const [birds,setBirds]=useState<BirdRow[]>(initialBirds),[male,setMale]=useState("APACHE"),[female,setFemale]=useState("BRISA"),[pedigreeTarget,setPedigreeTarget]=useState("");
+ const [birds,setBirds]=useState<BirdRow[]>(initialBirds),[male,setMale]=useState("APACHE"),[female,setFemale]=useState("BRISA"),[pedigreeTarget,setPedigreeTarget]=useState(""),[profileTarget,setProfileTarget]=useState("");
  useEffect(()=>{const merge=(base:BirdRow[],updates:BirdRow[])=>{const merged=base.map(b=>{const update=updates.find(x=>nameKey(x.name)===nameKey(b.name));return applyOfficialRules(update?{...b,...update,id:b.id}:b)});return[...merged,...updates.filter(x=>!base.some(b=>nameKey(b.name)===nameKey(x.name))).map(applyOfficialRules)];};let local=initialBirds;const saved=localStorage.getItem("apolo-birds");if(saved)try{local=merge(initialBirds,JSON.parse(saved))}catch{}setBirds(local);fetch("/api/birds",{headers:apiHeaders()}).then(r=>r.ok?r.json():Promise.reject()).then(data=>setBirds(current=>merge(current,data.birds||[]))).catch(()=>{})},[]);
  useEffect(()=>{localStorage.setItem("apolo-birds",JSON.stringify(birds))},[birds]);
  if(auth==="loading")return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",background:"#f4f6f8"}}><strong>Carregando Apolo Genética…</strong></main>;
@@ -65,7 +65,7 @@ export default function Home(){
   <main className="workspace"><header><button className="mobile-menu" onClick={()=>setDrawer(true)}><Menu/></button><img className="mobile-brand" src="/logo-criadouro-apolo.png" alt="Criadouro Apolo"/><div><span>Planejamento genético</span><strong>{view}</strong></div><button className="add-bird" onClick={()=>setModal(true)}><Plus size={18}/> Cadastrar ave</button></header>
    <section className="content">
     {view==="Visão geral"&&<Overview birds={birds} go={go} setMale={setMale} setFemale={setFemale}/>}
-    {view==="Minhas aves"&&<BirdsView birds={birds} setBirds={setBirds} openProfile={name=>{setPedigreeTarget(name);go("Pedigrees")}}/>}
+    {view==="Minhas aves"&&<BirdsView birds={birds} setBirds={setBirds} openProfile={name=>{setProfileTarget(name);go("Ficha individual")}}/>}\n    {view==="Ficha individual"&&<BirdDetail birds={birds} name={profileTarget} go={go} setMale={setMale} setFemale={setFemale} setPedigreeTarget={setPedigreeTarget}/>}
     {view==="Calculadora genética"&&<Simulator birds={birds} male={male} female={female} setMale={setMale} setFemale={setFemale} go={go}/>}
     {view==="Matriz genética"&&<Matrix birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
     {view==="Planejador"&&<Planner birds={birds} choose={(m,f)=>{setMale(m);setFemale(f);go("Calculadora genética")}}/>}
@@ -237,4 +237,22 @@ function AuditPanel({birds}:{birds:BirdRow[]}){
  <section className="table-card"><div className="card-heading"><div><p>PRIORIDADE DE REVISÃO</p><h2>Pedigrees incompletos</h2></div><ShieldCheck/></div>
  <div className="birds-table"><div className="table-head"><span>Ave</span><span>Sexo</span><span>Pai</span><span>Mãe</span><span>Completude</span></div>
  {incomplete.map(b=><div className="table-row" key={b.id}><strong>{b.name}</strong><span>{b.sex}</span><span>{b.father||"—"}</span><span>{b.mother||"—"}</span><b>{pedigreeQuality(b,birds).percent}%</b></div>)}</div></section></>
+}
+
+
+function BirdDetail({birds,name,go,setMale,setFemale,setPedigreeTarget}:{birds:BirdRow[];name:string;go:(s:string)=>void;setMale:(s:string)=>void;setFemale:(s:string)=>void;setPedigreeTarget:(s:string)=>void}){
+ const b=findBird(name,birds)||birds.find(isBreedable);if(!b)return null;
+ const prod=productionSummary(b.name),quality=pedigreeQuality(b,birds),merit=birdMerit(b);
+ const mates=birds.filter(x=>isActive(x)&&x.sex!==b.sex).map(x=>{const male=b.sex==="Macho"?b:x,female=b.sex==="Fêmea"?b:x;return{bird:x,...pairRating(male,female,birds)}}).filter(x=>!x.result.relationshipType).sort((a,c)=>c.score-a.score||a.result.F-c.result.F).slice(0,5);
+ const diagnose=(mate:BirdRow)=>{if(b.sex==="Macho"){setMale(b.name);setFemale(mate.name)}else{setMale(mate.name);setFemale(b.name)}go("Calculadora genética")};
+ return <><Title tag="FICHA INDIVIDUAL" title={b.name} text="Prontuário genealógico, produtivo e genético da ave."/>
+ <section className="dashboard-grid"><article className="panel"><div className="card-heading"><div><p>IDENTIFICAÇÃO</p><h2>{b.ring||"Sem anilha informada"}</h2></div><Bird/></div>
+ <p><b>Sexo:</b> {b.sex}</p><p><b>Status:</b> {b.status}</p><p><b>Linhagem:</b> {b.lineage||"—"}</p><p><b>Pai:</b> {b.father||"—"}</p><p><b>Mãe:</b> {b.mother||"—"}</p>
+ <button onClick={()=>{setPedigreeTarget(b.name);go("Pedigrees")}}>Abrir pedigree completo</button></article>
+ <article className="panel"><div className="card-heading"><div><p>INDICADORES</p><h2>Resumo genético</h2></div><Dna/></div>
+ <div className="stats"><Stat n={quality.percent+"%"} label="Pedigree conhecido"/><Stat n={prod.total} label="Filhos registrados"/><Stat n={prod.partners} label="Parceiros"/><Stat n={merit.score===null?"—":Math.round(merit.score)} label="Índice de mérito"/></div></article></section>
+ <section className="panel"><div className="card-heading"><div><p>ACASALAMENTO BIDIRECIONAL</p><h2>Melhores parceiros para {b.name}</h2></div><Sparkles/></div>
+ {mates.map((x,i)=><button className="pair-line" key={x.bird.id} onClick={()=>diagnose(x.bird)}><span><b>#{i+1} {x.bird.name}</b><small> • pedigree {x.result.confidence}% • escore {x.score}</small></span><em>F {x.result.F.toFixed(2)}%</em><ChevronRight size={17}/></button>)}</section>
+ <section className="panel"><div className="card-heading"><div><p>PRODUÇÃO HISTÓRICA</p><h2>Descendência registrada</h2></div><BarChart3/></div>
+ <div className="stats"><Stat n={prod.total} label="Total"/><Stat n={prod.males} label="Machos"/><Stat n={prod.females} label="Fêmeas"/><Stat n={prod.years.length} label="Anos com produção"/></div></section></>
 }
