@@ -202,3 +202,24 @@
  .print-legend{display:flex!important;gap:5mm!important;justify-content:center!important;font-size:6pt!important;margin-top:2mm!important;break-inside:avoid!important}
  .print-legend span{display:flex!important;align-items:center!important;gap:1mm!important}.print-legend i{width:4mm!important;height:4mm!important;border-radius:1mm!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
 }
+
+/* Print v5: two readable blocks per A4 page without clipping */
+@media print{
+ @page{size:A4 landscape;margin:6mm}
+ html,body{width:auto!important;height:auto!important;overflow:visible!important}
+ .matrix-pro{position:static!important;width:auto!important;height:auto!important}
+ .print-matrix-blocks{display:grid!important;grid-template-columns:1fr!important;gap:3mm!important;width:100%!important}
+ .print-matrix-block{display:block!important;width:100%!important;margin:0!important;padding:0!important;break-inside:avoid!important;page-break-inside:avoid!important}
+ .print-matrix-block:nth-child(2n){break-after:page!important;page-break-after:always!important}
+ .print-matrix-block table{width:100%!important;max-width:100%!important;table-layout:fixed!important}
+ .print-matrix-block th:first-child{width:24mm!important}
+ .print-matrix-block th,.print-matrix-block td{padding:1.15mm .55mm!important;font-size:6.6pt!important;white-space:normal!important;overflow:visible!important}
+ .print-matrix-block thead th{font-size:5.9pt!important;line-height:1.05!important;overflow-wrap:anywhere!important}
+ .print-block-head{margin:0 0 1mm!important;padding:0 0 1mm!important}
+ .print-block-head b{font-size:8pt!important}
+ .print-block-head span{font-size:6pt!important}
+ .matrix-print-title{margin-bottom:2mm!important;padding-bottom:1.5mm!important}
+ .matrix-print-title b{font-size:9.5pt!important}
+ .matrix-print-title span{font-size:6.2pt!important}
+ .print-legend{font-size:5.6pt!important;gap:3mm!important;margin-top:1.5mm!important}
+}
