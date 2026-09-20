@@ -38,9 +38,9 @@ const persistBird=(bird:BirdRow)=>fetch("/api/birds",{method:"PUT",headers:apiHe
 const forgetBird=(name:string)=>fetch(`/api/birds?name=${encodeURIComponent(name)}`,{method:"DELETE",headers:apiHeaders()}).catch(()=>null);
 const nav=[{label:"Visão geral",icon:LayoutDashboard},{label:"Minhas aves",icon:Bird},{label:"Calculadora genética",icon:Dna},{label:"Matriz genética",icon:Table2},{label:"Planejador",icon:CalendarRange},{label:"Simulador de árvore",icon:GitBranch},{label:"Pedigrees",icon:GitBranch},{label:"Auditoria genética",icon:ShieldCheck},{label:"Genética populacional",icon:BarChart3},{label:"Conservação genética",icon:Dna}];
 
-type PedigreeQuality={known:number;total:number;percent:number};
+type PedigreeQuality={known:number;total:number;percent:number};\nconst isFounder=(b?:BirdRow)=>!!b&&!b.father&&!b.mother;
 const pedigreeQualityCache=new WeakMap<BirdRow[],Map<string,PedigreeQuality>>();
-function pedigreeQuality(b:BirdRow,birds:BirdRow[]){let cache=pedigreeQualityCache.get(birds);if(!cache){cache=new Map();pedigreeQualityCache.set(birds,cache)}const key=nameKey(b.name),cached=cache.get(key);if(cached)return cached;const fields=[b.father,b.mother,...derivedAncestors(b,birds)],known=fields.filter(Boolean).length,result={known,total:fields.length,percent:Math.round(known/fields.length*100)};cache.set(key,result);return result}
+function pedigreeQuality(b:BirdRow,birds:BirdRow[]){let cache=pedigreeQualityCache.get(birds);if(!cache){cache=new Map();pedigreeQualityCache.set(birds,cache)}const key=nameKey(b.name),cached=cache.get(key);if(cached)return cached;if(isFounder(b)){const result={known:1,total:1,percent:100};cache.set(key,result);return result}const fields=[b.father,b.mother,...derivedAncestors(b,birds)],known=fields.filter(Boolean).length,result={known,total:fields.length,percent:Math.round(known/fields.length*100)};cache.set(key,result);return result}
 function auditPedigree(birds:BirdRow[]){
  const active=birds.filter(isActive),seen=new Map<string,number>();active.forEach(b=>seen.set(nameKey(b.name),(seen.get(nameKey(b.name))||0)+1));
  const duplicates=[...seen.values()].filter(n=>n>1).length,missingParents=active.filter(b=>!b.father||!b.mother).length,brokenLinks=active.filter(b=>[b.father,b.mother].some(n=>n&&!findBird(n,birds))).length,invalidBlood=active.filter(b=>Math.abs(Object.values(b.indices||{}).reduce((a,n)=>a+n,0)-100)>.05).length;
@@ -82,7 +82,7 @@ export default function Home(){
  </div>
 }
 
-function SimTreeNode({name,sex,meta,subject=false,onOpen}:{name:string;sex?:Sex;meta?:string;subject?:boolean;onOpen?:()=>void}){return <button type="button" className={`sim-tree-node ${subject?"subject":sex==="Fêmea"?"female":"male"} ${name?"":"unknown"} ${onOpen?"clickable":""}`} onClick={onOpen} disabled={!onOpen}><strong>{name||"Não informado"}</strong>{meta&&<span>{meta}</span>}</button>}
+function SimTreeNode({name,sex,meta,subject=false,onOpen}:{name:string;sex?:Sex;meta?:string;subject?:boolean;onOpen?:()=>void}){return <button type="button" className={`sim-tree-node ${subject?"subject":sex==="Fêmea"?"female":"male"} ${name?"":"unknown"} ${onOpen?"clickable":""}`} onClick={onOpen} disabled={!onOpen}><strong>{name||"Origem natural (mateiro)"}</strong>{meta&&<span>{meta}</span>}</button>}
 function TreeSimulator({birds,male,female,setMale,setFemale,openDiagnosis}:{birds:BirdRow[];male:string;female:string;setMale:(s:string)=>void;setFemale:(s:string)=>void;openDiagnosis:()=>void}){
  const males=birds.filter(b=>isActive(b)&&b.sex==="Macho"),females=birds.filter(b=>isActive(b)&&b.sex==="Fêmea"),mb=findBird(male,birds)??males[0],fb=findBird(female,birds)??females[0];
  const maleName=mb?.name||"",femaleName=fb?.name||"",result=genetic(maleName,femaleName,birds,false);
@@ -148,7 +148,7 @@ function genetic(m:string,f:string,birds:BirdRow[],details=true){
  const relationshipType=directFather?"Pai × filha":directMother?"Filho × mãe":maleAncestorDistance===2?"Avô × neta":femaleAncestorDistance===2?"Neto × avó":maleAncestorDistance>2?"Ancestral × descendente":femaleAncestorDistance>2?"Descendente × ancestral":fullSiblings?"Irmãos completos":halfSiblings?"Meio-irmãos":"";
  const coancestry=Math.max(0,kinship(m,f)),selfMale=kinship(m,m),selfFemale=kinship(f,f),F=Math.min(.9999,coancestry)*100;
  const relation=selfMale&&selfFemale?Math.min(100,coancestry/Math.sqrt(selfMale*selfFemale)*100):0,diversity=100-relation;
- const dataWarnings:string[]=[],qualityMale=male?pedigreeQuality(male,birds).percent:0,qualityFemale=female?pedigreeQuality(female,birds).percent:0,confidence=Math.round((qualityMale+qualityFemale)/2);
+ const dataWarnings:string[]=[],qualityMale=male?pedigreeQuality(male,birds).percent:0,qualityFemale=female?pedigreeQuality(female,birds).percent:0,founderMale=isFounder(male),founderFemale=isFounder(female),confidence=Math.round((qualityMale+qualityFemale)/2);if(founderMale||founderFemale)dataWarnings.push("Ave de origem natural (mateiro/fundador): sem ascendência registrada. No modelo genealógico é tratada como fundador não aparentado, salvo evidência de ancestral comum.");
  const severity=relationshipType||F>12.5?"risk":F>6.25?"attention":"good";
  const decision=relationshipType||F>12.5?"Evitar":F>10?"Cautela":F>6.25?"Moderado":F>3.125?"Favorável":F>0?"Muito favorável":"Abertura genética";
  const heading=relationshipType?"Parentesco direto identificado":F>12.5?"Consanguinidade muito elevada":F>10?"Consanguinidade elevada":F>6.25?"Consanguinidade moderada":F>3.125?"Consanguinidade controlada":"Baixa consanguinidade";
