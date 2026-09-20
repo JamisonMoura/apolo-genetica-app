@@ -256,7 +256,8 @@ function BirdDetail({birds,name,go,setMale,setFemale,setPedigreeTarget}:{birds:B
 }
 
 
-function PopulationGenetics({birds,choose}:{birds:BirdRow[];choose:(m:string,f:string)=>void}){\n const [tab,setTab]=useState<"overview"|"composition"|"lineages"|"kinship"|"strategy">("overview");
+function PopulationGenetics({birds,choose}:{birds:BirdRow[];choose:(m:string,f:string)=>void}){
+ const [tab,setTab]=useState<"overview"|"composition"|"lineages"|"kinship"|"strategy">("overview");
  const active=birds.filter(isActive),males=active.filter(b=>b.sex==="Macho"),females=active.filter(b=>b.sex==="Fêmea"),bases=plantelConcentration(active).slice(0,7);
  const pairs=males.flatMap(m=>females.map(f=>({m,f,r:genetic(m.name,f.name,birds,false)}))).filter(x=>!x.r.relationshipType),avg=pairs.length?pairs.reduce((a,x)=>a+x.r.F,0)/pairs.length:0;
  const bands=[pairs.filter(x=>x.r.F<3).length,pairs.filter(x=>x.r.F>=3&&x.r.F<6.25).length,pairs.filter(x=>x.r.F>=6.25&&x.r.F<12.5).length,pairs.filter(x=>x.r.F>=12.5&&x.r.F<=20).length,pairs.filter(x=>x.r.F>20).length],max=Math.max(...bands,1);
