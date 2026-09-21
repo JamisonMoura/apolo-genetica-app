@@ -313,3 +313,33 @@
  .sim-branch>.sim-children>.sim-branch:before{left:-2.5mm!important;width:2.5mm!important;border-top:.65pt solid #536579!important}
  .sim-tree-node{z-index:2!important}
 }
+
+/* Pedigree print v4 — certificate-style geometry based on Apolo pedigree */
+@media print{
+ .tree-simulator-card{width:287mm!important;min-height:190mm!important;padding:5mm 8mm!important;background:#fff!important}
+ .tree-print-header{margin-bottom:2mm!important}
+ .tree-simulator-head{margin:1mm 0 2mm!important}
+ .tree-scroll{overflow:visible!important;width:100%!important}
+ .tree-panorama{width:100%!important;min-width:0!important;margin:0!important;transform:none!important}
+ .tree-generation-labels{display:grid!important;grid-template-columns:28mm 34mm 42mm 50mm 1fr!important;column-gap:7mm!important;width:100%!important;margin-bottom:3mm!important}
+ .sim-tree{display:grid!important;grid-template-columns:28mm 1fr!important;column-gap:7mm!important;align-items:center!important;width:100%!important;position:relative!important}
+ .sim-tree>.sim-tree-node{width:28mm!important;min-width:28mm!important;max-width:28mm!important;justify-self:start!important}
+ .sim-tree>.sim-tree-node:after{width:7mm!important}
+ .sim-tree>.sim-children.parents{display:grid!important;grid-template-rows:1fr 1fr!important;gap:5mm!important;width:100%!important;position:relative!important}
+ .sim-tree>.sim-children.parents:before{left:-3.5mm!important;top:25%!important;bottom:25%!important}
+ .sim-tree>.sim-children.parents>.sim-branch:before{left:-3.5mm!important;width:3.5mm!important}
+ .sim-branch{display:grid!important;grid-template-columns:34mm 1fr!important;column-gap:7mm!important;align-items:center!important;width:100%!important;position:relative!important}
+ .sim-branch>.sim-tree-node{width:34mm!important;min-width:34mm!important;max-width:34mm!important}
+ .sim-branch>.sim-tree-node:after{width:7mm!important}
+ .sim-branch>.sim-children{display:grid!important;grid-template-rows:1fr 1fr!important;gap:2.3mm!important;width:100%!important;position:relative!important}
+ .sim-branch>.sim-children:before{left:-3.5mm!important;top:25%!important;bottom:25%!important}
+ .sim-branch>.sim-children>.sim-branch:before{left:-3.5mm!important;width:3.5mm!important}
+ .sim-branch .sim-branch{grid-template-columns:42mm 1fr!important}
+ .sim-branch .sim-branch>.sim-tree-node{width:42mm!important;min-width:42mm!important;max-width:42mm!important}
+ .sim-branch .sim-branch .sim-branch{grid-template-columns:50mm 1fr!important}
+ .sim-branch .sim-branch .sim-branch>.sim-tree-node{width:50mm!important;min-width:50mm!important;max-width:50mm!important}
+ .sim-tree-node{min-height:7mm!important;padding:1.2mm 1.5mm!important;font-size:6.4pt!important;border:1pt solid #263849!important;box-sizing:border-box!important}
+ .sim-tree-node.male{background:#08708b!important;color:#fff!important}.sim-tree-node.female{background:#cf4652!important;color:#fff!important}.sim-tree-node.subject{background:#d4a43d!important;color:#fff!important}
+ .sim-tree-node.unknown{background:#f0f2f5!important;color:#667085!important;border-style:dashed!important}
+ .tree-print-guide{width:96%!important;margin:4mm auto 0!important}
+}
