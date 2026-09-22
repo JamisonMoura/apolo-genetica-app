@@ -98,23 +98,6 @@ type DNAAlleles=Record<string,[string,string]>;
 type DNAProfile={cig:string;name:string;ring:string;sex?:string;sample?:string;lab?:string;notes?:string;alleles:DNAAlleles;updatedAt:string};
 const dnaMarkers=["Oa2","Oa7","Oa26","Oa35","UN5","UN7","UN10","UN13","UN14","UN15","UN19","UN21","UN30","UN34","UN38"];
 const emptyDNA=()=>Object.fromEntries(dnaMarkers.map(m=>[m,["",""]])) as DNAAlleles;
-type CIGImport={cig:string;name:string;ring:string;sample:string;alleles:DNAAlleles;page:number;confidence:number};
-function parseUnigenText(raw:string,page:number):CIGImport{
- const text=raw.replace(/\s+/g," ").trim(), alleles=emptyDNA();
- const norm=(s:string)=>s.replace(/Un/g,"UN");
- const markerRe=/(Oa2|Oa7|Oa26|Oa35|Un5|Un7|Un10|Un13|Un14|Un15|Un19|Un21|Un30|Un34|Un38)/gi;
- const hits=[...text.matchAll(markerRe)];
- hits.forEach((h,i)=>{const m=norm(h[1]);const before=text.slice(Math.max(0,(h.index||0)-24),h.index).match(/(\d+|-)\s*[\/]?\s*(\d+|-)?\s*$/);const after=text.slice((h.index||0)+h[0].length,(h.index||0)+h[0].length+28).match(/^\s*(?:Alelos?:\s*)?(\d+|-)\s*[\/]?\s*(\d+|-)?/i);const pair=before||after;if(pair)alleles[m]=[pair[1]==="-"?"":pair[1],pair[2]&&pair[2]!=="-"?pair[2]:""]});
- // Unigen PDFs usually expose the allele pair immediately before each locus; fallback for extracted order "Alelos pair / locus".
- dnaMarkers.forEach(m=>{if(alleles[m][0])return;const rx=new RegExp("(?:Alelos?:\\s*)?(\\d+|-)\\s+(\\d+|-)\\s*\\/?\\s*"+m.replace("UN","Un"),"i"),q=text.match(rx);if(q)alleles[m]=[q[1]==="-"?"":q[1],q[2]==="-"?"":q[2]]});
- const ring=(text.match(/ID\s*\(anilha\)\s*([^]*?)(?=Nome|Data de Nasc|Informações da Solicitação)/i)?.[1]||"").replace(/Sporophila[^]*?maximiliani/i,"").trim().slice(0,80);
- const sample=(text.match(/N[ºo°]\s*da\s*Amostra\s*([A-Z0-9-]+)/i)?.[1]||"").trim();
- let name=(text.match(/CÓDIGO DE IDENTIDADE GENÉTICA\s+(.+?)(?=O Laboratório|Data de Nasc|\()/i)?.[1]||text.match(/Nome\s+(.+?)\s+Data de Nasc/i)?.[1]||"").trim();
- if(/^não informado$/i.test(name))name="";
- const cig=name||ring||sample||("UNIGEN-"+page);
- const filled=dnaMarkers.filter(m=>alleles[m][0]).length;
- return{cig,name,ring,sample,alleles,page,confidence:Math.round(filled/15*100)}
-}
 function ParentageDNA(){
  const [profiles,setProfiles]=useState<DNAProfile[]>([]),[tab,setTab]=useState<"compare"|"bank">("compare"),[mode,setMode]=useState<"duo"|"trio">("duo");
  const [child,setChild]=useState<DNAAlleles>(emptyDNA),[father,setFather]=useState<DNAAlleles>(emptyDNA),[mother,setMother]=useState<DNAAlleles>(emptyDNA),[childCig,setChildCig]=useState(""),[fatherCig,setFatherCig]=useState(""),[motherCig,setMotherCig]=useState("");
