@@ -263,7 +263,9 @@ function AuditPanel({birds}:{birds:BirdRow[]}){
 }
 function BirdDetail({birds,name,go,setMale,setFemale,setPedigreeTarget}:{birds:BirdRow[];name:string;go:(s:string)=>void;setMale:(s:string)=>void;setFemale:(s:string)=>void;setPedigreeTarget:(s:string)=>void}){
  const b=findBird(name,birds)||birds.find(isBreedable);if(!b)return null;
- const prod=productionSummary(b.name),quality=pedigreeQuality(b,birds),merit=birdMerit(b);\n const [dnaProfile,setDnaProfile]=useState<DNAProfile|null>(null),[dnaOpen,setDnaOpen]=useState(false);\n useEffect(()=>{fetch("/api/dna-profiles",{headers:apiHeaders()}).then(r=>r.ok?r.json():{profiles:[]}).then(d=>setDnaProfile((d.profiles||[]).find((p:DNAProfile)=>nameKey(p.name)===nameKey(b.name)||ringKey(p.ring||"")===ringKey(b.ring||""))||null)).catch(()=>{})},[b.name,b.ring]);
+ const prod=productionSummary(b.name),quality=pedigreeQuality(b,birds),merit=birdMerit(b);
+ const [dnaProfile,setDnaProfile]=useState<DNAProfile|null>(null),[dnaOpen,setDnaOpen]=useState(false);
+ useEffect(()=>{fetch("/api/dna-profiles",{headers:apiHeaders()}).then(r=>r.ok?r.json():{profiles:[]}).then(d=>setDnaProfile((d.profiles||[]).find((p:DNAProfile)=>nameKey(p.name)===nameKey(b.name)||ringKey(p.ring||"")===ringKey(b.ring||""))||null)).catch(()=>{})},[b.name,b.ring]);
  const mates=birds.filter(x=>isActive(x)&&x.sex!==b.sex).map(x=>{const male=b.sex==="Macho"?b:x,female=b.sex==="Fêmea"?b:x;return{bird:x,...pairRating(male,female,birds)}}).filter(x=>!x.result.relationshipType).sort((a,c)=>c.score-a.score||a.result.F-c.result.F).slice(0,5);
  const diagnose=(mate:BirdRow)=>{if(b.sex==="Macho"){setMale(b.name);setFemale(mate.name)}else{setMale(mate.name);setFemale(b.name)}go("Calculadora genética")};
  return <><Title tag="FICHA INDIVIDUAL" title={b.name} text="Prontuário genealógico, produtivo e genético da ave."/>
