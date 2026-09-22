@@ -367,3 +367,6 @@
 
 /* Clickable profile tabs */
 .bird-profile-tabs button{appearance:none;border:0;border-bottom:3px solid transparent;background:#fff;text-align:center;padding:13px 8px;color:#52657d;font:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s,color .15s,border-color .15s}.bird-profile-tabs button:hover{background:#f7f9fc;color:#173b6c}.bird-profile-tabs button.active{color:#a56e08;border-bottom-color:#c9942e;background:#fffaf0}@media(max-width:1000px){.bird-profile-tabs button{min-width:120px;flex:1}}
+
+/* Session / logout */
+.profile-session{display:grid!important;gap:10px!important}.profile-user{display:flex;align-items:center;gap:10px}.logout-button{width:100%;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#dce6f2;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer}.logout-button:hover{background:rgba(255,255,255,.12);color:#fff}
