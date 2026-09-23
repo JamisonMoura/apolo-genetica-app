@@ -370,3 +370,6 @@
 
 /* Session / logout */
 .profile-session{display:grid!important;gap:10px!important}.profile-user{display:flex;align-items:center;gap:10px}.logout-button{width:100%;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#dce6f2;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer}.logout-button:hover{background:rgba(255,255,255,.12);color:#fff}
+
+/* PDF import inside individual CIG card */
+.bird-dna-import{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px 18px;padding:13px 15px;border:1px dashed #9eb6d2;border-radius:11px;background:#f7faff;margin-bottom:14px}.bird-dna-import>div{display:grid;gap:2px}.bird-dna-import b{color:#10233e;font-size:14px}.bird-dna-import small{color:#6c7d91;font-size:12px}.bird-dna-import label{background:#173b6c;color:#fff;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer}.bird-dna-import label input{display:none}.bird-dna-import p{grid-column:1/-1;margin:2px 0 0;font-size:12px;color:#315d8d}@media(max-width:650px){.bird-dna-import{grid-template-columns:1fr}.bird-dna-import label{text-align:center}}
