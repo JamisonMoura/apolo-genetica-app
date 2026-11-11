@@ -50,6 +50,18 @@ function auditPedigree(birds:BirdRow[]){
  return{duplicates,missingParents,brokenLinks,invalidBlood,conflicts,complete,total:active.length,score:Math.round(80*complete/Math.max(1,active.length)+20*integrity)}
 }
 
+function mergeBirds(base:BirdRow[],updates:BirdRow[]){
+ const byName=new Map(updates.map(b=>[nameKey(b.name),b]));
+ const baseNames=new Set(base.map(b=>nameKey(b.name)));
+ return [
+  ...base.map(b=>{
+   const update=byName.get(nameKey(b.name));
+   return applyOfficialRules(update?{...b,...update,id:b.id}:b);
+  }),
+  ...updates.filter(b=>!baseNames.has(nameKey(b.name))).map(applyOfficialRules),
+ ];
+}
+
 export default function Home(){
  const [auth,setAuth]=useState<"loading"|"in"|"out">("loading"),[loginEmail,setLoginEmail]=useState(""),[loginPassword,setLoginPassword]=useState(""),[loginError,setLoginError]=useState(""),[loginBusy,setLoginBusy]=useState(false);
  useEffect(()=>{const t=localStorage.getItem("apolo-access-token");if(!t){setAuth("out");return}fetch(SUPABASE_URL+"/auth/v1/user",{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${t}`}}).then(r=>{if(r.ok)setAuth("in");else{localStorage.removeItem("apolo-access-token");setAuth("out")}}).catch(()=>setAuth("out"))},[]);
@@ -57,7 +69,24 @@ export default function Home(){
  const logout=()=>{localStorage.removeItem("apolo-access-token");setAuth("out")};
  const [view,setView]=useState("Visão geral"),[drawer,setDrawer]=useState(false),[modal,setModal]=useState(false);
  const [birds,setBirds]=useState<BirdRow[]>(initialBirds),[male,setMale]=useState("APACHE"),[female,setFemale]=useState("BRISA"),[pedigreeTarget,setPedigreeTarget]=useState(""),[profileTarget,setProfileTarget]=useState("");
- useEffect(()=>{const merge=(base:BirdRow[],updates:BirdRow[])=>{const merged=base.map(b=>{const update=updates.find(x=>nameKey(x.name)===nameKey(b.name));return applyOfficialRules(update?{...b,...update,id:b.id}:b)});return[...merged,...updates.filter(x=>!base.some(b=>nameKey(b.name)===nameKey(x.name))).map(applyOfficialRules)];};let local=initialBirds;const saved=localStorage.getItem("apolo-birds");if(saved)try{local=merge(initialBirds,JSON.parse(saved))}catch{}setBirds(local);Promise.all([fetch("/api/birds",{headers:apiHeaders()}).then(r=>r.ok?r.json():{birds:[]}),fetch("/api/deleted-birds",{headers:apiHeaders()}).then(r=>r.ok?r.json():[])]).then(([data,deleted])=>{const gone=new Set((deleted||[]).map((x:{name:string})=>nameKey(x.name)));setBirds(current=>merge(current,data.birds||[]).filter(b=>!gone.has(nameKey(b.name))))}).catch(()=>{})},[]);
+ useEffect(()=>{
+  const saved=localStorage.getItem("apolo-birds");
+  if(saved)try{setBirds(mergeBirds(initialBirds,JSON.parse(saved)))}catch{}
+ },[]);
+ useEffect(()=>{
+  if(auth!=="in")return;
+  const controller=new AbortController();
+  const options={headers:apiHeaders(),signal:controller.signal};
+  Promise.all([
+   fetch("/api/birds",options).then(async r=>r.ok?(await r.json()).birds:[]),
+   fetch("/api/deleted-birds",options).then(r=>r.ok?r.json():[]),
+  ]).then(([updates,deleted])=>{
+   if(controller.signal.aborted)return;
+   const gone=new Set((deleted||[]).map((x:{name:string})=>nameKey(x.name)));
+   setBirds(current=>mergeBirds(current,updates||[]).filter(b=>!gone.has(nameKey(b.name))));
+  }).catch(()=>{});
+  return ()=>controller.abort();
+ },[auth]);
  useEffect(()=>{localStorage.setItem("apolo-birds",JSON.stringify(birds))},[birds]);
  if(auth==="loading")return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",background:"#f4f6f8"}}><strong>Carregando Apolo Genética…</strong></main>;
  if(auth==="out")return <main style={{minHeight:"100vh",display:"grid",placeItems:"center",background:"linear-gradient(135deg,#071c33,#173b6c)",padding:24}}><form onSubmit={doLogin} style={{width:"min(420px,100%)",background:"white",padding:36,borderRadius:22,boxShadow:"0 24px 70px #0005"}}><div style={{textAlign:"center",marginBottom:28}}><img src="/logo-criadouro-apolo.png" alt="Criadouro Apolo" style={{width:240,maxWidth:"78%",height:120,objectFit:"contain",objectPosition:"center",display:"block",margin:"0 auto"}}/><h1 style={{margin:"10px 0 4px",color:"#173b6c"}}>Apolo Genética</h1><p style={{margin:0,color:"#667085"}}>Acesso ao sistema de gestão genética</p></div><label style={{display:"block",fontWeight:700,marginBottom:6}}>E-mail</label><input type="email" required value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} style={{width:"100%",padding:13,border:"1px solid #ccd3dc",borderRadius:10,marginBottom:16}}/><label style={{display:"block",fontWeight:700,marginBottom:6}}>Senha</label><input type="password" required value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} style={{width:"100%",padding:13,border:"1px solid #ccd3dc",borderRadius:10,marginBottom:12}}/>{loginError&&<p style={{color:"#b42318",fontSize:14}}>{loginError}</p>}<button disabled={loginBusy} style={{width:"100%",padding:14,border:0,borderRadius:10,background:"#173b6c",color:"white",fontWeight:800,cursor:"pointer"}}>{loginBusy?"Entrando…":"Entrar"}</button></form></main>;
